@@ -1,4 +1,9 @@
 venv
 __pycache__
 *.csv
+<<<<<<< HEAD
 *.docx
+=======
+*.txt
+
+>>>>>>> 27eaf418bb74f094428091f3764bc9035c57b76c
