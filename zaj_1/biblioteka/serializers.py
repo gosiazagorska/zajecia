@@ -78,7 +78,7 @@ class AuthorSerializer(serializers.ModelSerializer):
         model = Author
         fields = '__all__'
 
-         validators = [
+        validators = [
             UniqueTogetherValidator(
                 queryset=Author.objects.all(),
                 fields=['first_name', 'last_name']
@@ -128,4 +128,4 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-        ]
+    
