@@ -7,5 +7,11 @@
 <p>Płeć: {{ osoba.plec }}</p>
 <p>Data dodania: {{ osoba.data_dodania }}</p>
 <p>Stanowisko: {{ osoba.stanowisko }}</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" onclick="return confirm('Czy na pewno chcesz usunąć tę osobę?');">
+        Usuń osobę
+    </button>
+</form>
 <hr>
 {% endblock %}

@@ -1,9 +1,12 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect 
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Book
+from .models import Book, Stanowisko
 from .serializers import BookSerializer
+from django.http import Http404, HttpResponse
+import datetime
+from .forms import OsobaForm
 
 # określamy dostępne metody żądania dla tego endpointu
 @api_view(['GET', "POST"])
@@ -85,10 +88,62 @@ def osoba_list_html(request):
     return render(request,
                   "biblioteka/osoba/list.html",
                   {'osoby': osoby})
+
+
 def osoba_detail_html(request, id):
     # pobieramy konkretny obiekt Osoba
-    osoba = Osoba.objects.get(id=id)
+    try:
+        osoba = Osoba.objects.get(id=id)
+    except Osoba.DoesNotExist:
+        raise Http404("Obiekt Osoba o podanym id nie istnieje")
+    if request.method == "GET":
+        return render(request,
+                    "biblioteka/osoba/detail.html",
+                    {'osoba': osoba})
+    if request.method == "POST":
+        osoba.delete()
+        return redirect('osoba-list') 
+
+def osoba_create_html(request):
+    stanowiska = Stanowisko.objects.all()  # pobieramy listę stanowisk z bazy
+
+    if request.method == "GET":
+        return render(request, "biblioteka/osoba/create.html", {'stanowiska': stanowiska})
+    elif request.method == "POST":
+        imie = request.POST.get('imie')
+        nazwisko = request.POST.get('nazwisko')
+        plec = request.POST.get('plec')
+        stanowisko_id = request.POST.get('stanowisko')
+
+        if imie and nazwisko and plec and stanowisko_id:
+            # pobieramy obiekt stanowiska
+            try:
+                stanowisko_obj = Stanowisko.objects.get(id=stanowisko_id)
+            except Stanowisko.DoesNotExist:
+                error = "Wybrane stanowisko nie istnieje."
+                return render(request, "biblioteka/osoba/create.html", {'error': error, 'stanowiska': stanowiska})
+
+            # tworzymy nową osobę
+            Osoba.objects.create(
+                imie=imie,
+                nazwisko=nazwisko,
+                plec=plec,
+                stanowisko=stanowisko_obj
+            )
+            return redirect('osoba-list')
+        else:
+            error = "Wszystkie pola są wymagane."
+            return render(request, "biblioteka/osoba/create.html", {'error': error, 'stanowiska': stanowiska})
+
+def osoba_create_django_form(request):
+    if request.method == "POST":
+        form = OsobaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('osoba-list')  
+    else:
+        form = OsobaForm()
 
     return render(request,
-                  "biblioteka/osoba/detail.html",
-                  {'osoba': osoba})
+                  "biblioteka/osoba/create_django.html",
+                  {'form': form})
