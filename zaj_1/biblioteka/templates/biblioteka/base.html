@@ -8,6 +8,11 @@
     <body>
         <div id="header" >
             Pierwsza aplikacja Django
+            {% if request.session.token %}
+                <a href="{% url 'drf-token-logout' %}">Wyloguj</a>
+            {% else %}
+                <a href="{% url 'drf-token-login' %}">Zaloguj</a>
+            {% endif %}
         </div>
         <hr/>
         <div id="content">
