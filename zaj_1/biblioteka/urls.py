@@ -14,4 +14,6 @@ urlpatterns = [
     path('logout/', views.user_logout, name='user-logout'),
     path('token/login/', views.drf_token_login, name='drf-token-login'),
     path('token/logout/', views.drf_token_logout, name='drf-token-logout'),
+    path("osoby/<int:pk>/permisje/", views.osoba_view),
+    path("osoby/<int:pk>/permisje_decorator/", views.osoba_view_decorator),
 ]

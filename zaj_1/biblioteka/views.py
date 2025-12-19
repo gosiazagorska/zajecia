@@ -10,6 +10,10 @@ from .serializers import BookSerializer
 from django.http import Http404, HttpResponse
 import datetime
 from .forms import OsobaForm
+from django.core.exceptions import PermissionDenied
+from django.contrib.auth.decorators import login_required, permission_required
+
+
 
 from functools import wraps
 
@@ -20,9 +24,12 @@ def drf_token_required(view_func):
         if not token_key:
             return redirect('drf-token-login')
         try:
-            Token.objects.get(key=token_key)
+            # tutaj przypiszmy ten Token do zmiennej `token`
+            token = Token.objects.get(key=token_key)
         except Token.DoesNotExist:
             return redirect('drf-token-login')
+        # a tutaj zaktualizujmy nasze pole `user` w zapytaniu
+        request.user = token.user
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
@@ -155,6 +162,7 @@ def osoba_list_html(request):
 from django.shortcuts import render
 
 @drf_token_required
+@permission_required('biblioteka.view_osoba', raise_exception=True)
 def osoba_list_html(request):
     # pobieramy wszystkie obiekty Osoba z bazy poprzez QuerySet
     osoby = Osoba.objects.all()
@@ -261,3 +269,23 @@ def drf_token_login(request):
 def drf_token_logout(request):
     request.session.flush()
     return redirect('drf-token-login')
+
+
+@login_required(login_url='user-login')
+def osoba_view(request, pk):
+    if not request.user.has_perm('biblioteka.view_osoba'):
+        raise PermissionDenied()
+    try:
+        osoba = Osoba.objects.get(pk=pk)
+        return HttpResponse(f"Ten użytkownik nazywa się {osoba.imie} {osoba.nazwisko}")
+    except Osoba.DoesNotExist:
+        return HttpResponse(f"W bazie nie ma użytkownika o id={pk}.")
+    
+@login_required(login_url='user-login')
+@permission_required('biblioteka.view_osoba', raise_exception=True)
+def osoba_view_decorator(request, pk):
+    try:
+        osoba = Osoba.objects.get(pk=pk)
+        return HttpResponse(f"Ten użytkownik nazywa się {osoba.imie} {osoba.nazwisko}")
+    except Osoba.DoesNotExist:
+        return HttpResponse(f"W bazie nie ma użytkownika o id={pk}.")
